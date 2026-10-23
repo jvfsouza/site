@@ -63,6 +63,54 @@
     #mute[aria-pressed="true"] .on { display: none; }
     #mute[aria-pressed="true"] .off { display: block; }
 
+    /* ---------- Abertura (estilo PS3 Slim) ---------- */
+    #intro { position: fixed; inset: 0; z-index: 9; cursor: pointer; }
+    #intro[hidden] { display: none; }
+    #boot-logo {
+      position: absolute;
+      left: 64%;
+      top: 58%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    #boot-logo .name {
+      display: block;
+      font-weight: 300;
+      font-size: clamp(2rem, 6vw, 4.2rem);
+      letter-spacing: 0.35em;
+      padding-left: 0.35em;
+      text-shadow: 0 0 18px rgba(255, 255, 255, 0.45);
+    }
+    #boot-logo .sub {
+      display: block;
+      margin-top: 6px;
+      font-weight: 300;
+      font-size: clamp(0.7rem, 1.6vw, 0.95rem);
+      letter-spacing: 0.6em;
+      padding-left: 0.6em;
+      color: rgba(255, 255, 255, 0.75);
+    }
+    /* Duração = --d (3,9 s): surge em 1,8–2,3 s, fica até 3,4 s e some até 3,9 s */
+    #intro.run #boot-logo { animation: bootLogo var(--d) linear forwards; }
+    @keyframes bootLogo {
+      0%, 46% { opacity: 0; filter: blur(6px); }
+      59% { opacity: 1; filter: blur(0); }
+      87% { opacity: 1; filter: blur(0); }
+      100% { opacity: 0; filter: blur(0); }
+    }
+    #intro .skip {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.4);
+    }
+
     /* ---------- XMB ---------- */
     #xmb { position: fixed; inset: 0; z-index: 5; }
     #xmb[hidden] { display: none; }
@@ -315,6 +363,7 @@
       .clock .time { font-size: 1.15rem; }
       .clock .date { font-size: 0.8rem; }
       .hint { display: none; }
+      #boot-logo { left: 50%; top: 46%; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -329,6 +378,11 @@
     <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
     <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
   </button>
+
+  <div id="intro" hidden aria-label="Abertura (clique para pular)">
+    <div id="boot-logo"><span class="name" id="boot-name"></span><span class="sub">portfólio</span></div>
+    <div class="skip">clique para pular</div>
+  </div>
 
   <div id="xmb" hidden>
     <div class="clock" aria-hidden="true">
@@ -503,7 +557,8 @@
         conv.buffer = buf;
         return conv;
       },
-      // Recriação sintetizada do clima do boot (~3s): sinos suaves + "cordas" que crescem.
+      // Recriação sintetizada do som de abertura (~4,5 s): "cordas" que crescem com o
+      // filtro abrindo. Usada só se assets/ps3-boot.mp3 não carregar.
       bootSynth() {
         if (!this.ctx) return;
         const c = this.ctx, t0 = c.currentTime + 0.03;
@@ -511,30 +566,15 @@
         out.gain.value = 0.8; wet.gain.value = 0.7;
         out.connect(this.master); out.connect(rev); rev.connect(wet); wet.connect(this.master);
 
-        // Sinos em arpejo
-        [1046.5, 1318.5, 1568, 2093].forEach((f, i) => {
-          const t = t0 + 0.15 + i * 0.13;
-          [1, 2.76].forEach((mult, j) => {
-            const o = c.createOscillator(), g = c.createGain();
-            o.type = "sine"; o.frequency.value = f * mult;
-            g.gain.setValueAtTime(0.0001, t);
-            g.gain.exponentialRampToValueAtTime(j ? 0.012 : 0.05, t + 0.01);
-            g.gain.exponentialRampToValueAtTime(0.0001, t + (j ? 0.6 : 1.6));
-            o.connect(g); g.connect(out);
-            o.start(t); o.stop(t + 1.7);
-          });
-        });
-
-        // "Cordas": serrilhadas desafinadas num filtro que abre
         const lp = c.createBiquadFilter();
         lp.type = "lowpass"; lp.Q.value = 0.7;
-        lp.frequency.setValueAtTime(280, t0 + 0.4);
-        lp.frequency.exponentialRampToValueAtTime(2600, t0 + 2.0);
-        lp.frequency.exponentialRampToValueAtTime(900, t0 + 3.4);
+        lp.frequency.setValueAtTime(250, t0 + 0.3);
+        lp.frequency.exponentialRampToValueAtTime(2600, t0 + 2.3);
+        lp.frequency.exponentialRampToValueAtTime(900, t0 + 4.4);
         const pad = c.createGain();
-        pad.gain.setValueAtTime(0.0001, t0 + 0.4);
-        pad.gain.exponentialRampToValueAtTime(0.1, t0 + 1.9);
-        pad.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.6);
+        pad.gain.setValueAtTime(0.0001, t0 + 0.3);
+        pad.gain.exponentialRampToValueAtTime(0.1, t0 + 2.3);
+        pad.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7);
         lp.connect(pad); pad.connect(out);
         [65.41, 130.81, 196, 261.63, 329.63, 392, 493.88, 587.33].forEach((f) => {
           [-7, 0, 7].forEach((det) => {
@@ -542,31 +582,32 @@
             o.type = "sawtooth"; o.frequency.value = f; o.detune.value = det;
             const g = c.createGain(); g.gain.value = 0.12;
             o.connect(g); g.connect(lp);
-            o.start(t0 + 0.4); o.stop(t0 + 3.7);
+            o.start(t0 + 0.3); o.stop(t0 + 4.8);
           });
         });
       },
       // Som de abertura: assets/ps3-boot.mp3 (ou o sintetizado, se o arquivo faltar).
-      // Toca uma vez por sessão: ao abrir, se o navegador deixar; senão, no primeiro clique/tecla.
+      // Tenta tocar uma vez, no começo da abertura. Se o navegador bloquear som
+      // automático, não toca (para não começar atrasado, já no menu).
       startup: null,
       startupDone: false,
-      prepareStartup() {
-        const el = new Audio("assets/ps3-boot.mp3");
-        el.preload = "auto";
-        el.addEventListener("error", () => { if (this.startup === el) this.startup = null; }, { once: true });
-        this.startup = el;
-      },
       playStartup() {
         if (this.startupDone) return;
-        const ok = () => { this.startupDone = true; store.set("ps3-booted", "1", sessionStorage); };
-        if (this.startup) {
-          this.startup.muted = this.muted;
-          this.file = this.startup;
-          this.startup.play().then(ok).catch(() => {});   // bloqueado: tenta de novo no 1º clique
-        } else if (this.ctx && this.ctx.state === "running") {
+        const el = new Audio("assets/ps3-boot.mp3");
+        el.muted = this.muted;
+        this.startup = el;
+        const synth = () => {
+          if (this.startupDone || !this.ctx || this.ctx.state !== "running") return;
+          this.startupDone = true;
           this.bootSynth();
-          ok();
-        }
+        };
+        el.addEventListener("error", synth, { once: true });
+        el.play().then(() => { this.startupDone = true; this.file = el; }).catch(() => {});
+      },
+      // Fim da abertura: se o som ainda não começou (carregando/bloqueado), cancela.
+      cancelStartup() {
+        if (!this.startupDone && this.startup) this.startup.pause();
+        this.startupDone = true;
       },
       tick(kind = "move") {
         if (!this.ctx || this.muted) return;
@@ -649,7 +690,15 @@
       v: 0.004 + Math.random() * 0.012, tw: Math.random() * 6.28,
     }));
 
-    let waveAlpha = 0, waveTarget = 0;
+    // Opacidade do fundo e da onda. Durante a abertura seguem uma linha do tempo
+    // (onda surge no preto, depois o fundo colorido); fora dela ficam em 1.
+    let introStart = 0, introScale = 1;   // introStart 0 = sem abertura
+    const ramp = (e, a, b) => { const k = Math.min(Math.max((e - a) / (b - a), 0), 1); return k * k * (3 - 2 * k); };
+    function waveAlphas(now) {
+      if (!introStart) return [1, 1];
+      const e = ((now - introStart) / 1000) * introScale;   // segundos na escala da abertura de 3,9 s
+      return [ramp(e, 0.4, 1.6), ramp(e, 1.2, 2.6)];        // [linhas, fundo]
+    }
     const waveY = (x, t, k) => {
       const ph = k * 0.045;
       return H * 0.6
@@ -666,15 +715,18 @@
       const dt = Math.min((now - lastDraw) / 1000, 0.1);
       lastDraw = now;
       const t = reduceMotion ? 0 : now / 1000;
-      waveAlpha += (waveTarget - waveAlpha) * Math.min(dt * 2.2, 1);
+      const [lineAlpha, bgAlpha] = waveAlphas(now);
 
       g.globalAlpha = 1;
       g.fillStyle = "#000";
       g.fillRect(0, 0, W, H);
-      if (waveAlpha <= 0.003) return;
+      if (lineAlpha <= 0.003 && bgAlpha <= 0.003) return;
 
-      g.globalAlpha = waveAlpha;
-      g.drawImage(bgLayer, 0, 0, W, H);
+      if (bgAlpha > 0.003) {
+        g.globalAlpha = bgAlpha;
+        g.drawImage(bgLayer, 0, 0, W, H);
+      }
+      g.globalAlpha = lineAlpha;
 
       // Fita principal: várias linhas finas quase paralelas
       g.globalCompositeOperation = "lighter";
@@ -706,7 +758,7 @@
         if (p.x > 1.02) p.x = -0.02;
         const x = p.x * W, y = waveY(x, t, 20) + p.o * H;
         const r = p.s * 3;
-        g.globalAlpha = (0.35 + 0.65 * Math.max(0, Math.sin(p.tw))) * 0.7 * waveAlpha;
+        g.globalAlpha = (0.35 + 0.65 * Math.max(0, Math.sin(p.tw))) * 0.7 * lineAlpha;
         g.drawImage(sprite, x - r, y - r, r * 2, r * 2);
       }
       g.globalCompositeOperation = "source-over";
@@ -917,9 +969,8 @@
       $("#clock-time").textContent = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     }
 
-    /* ---------------- Fluxo: abre direto no XMB ---------------- */
+    /* ---------------- Fluxo: abertura → XMB ---------------- */
     function showXMB(animate) {
-      waveTarget = 1;
       const x = $("#xmb");
       x.hidden = false;
       if (animate) { x.classList.add("enter"); setTimeout(() => x.classList.remove("enter"), 1200); }
@@ -927,30 +978,60 @@
       focusCurrent();
     }
 
+    // Abertura parecida com a do PS3 Slim, mais curta: preto → onda surge → fundo
+    // colorido → nome à direita → menu. Clique, toque, Enter, Espaço ou Esc pulam.
+    function runIntro() {
+      const INTRO_MS = reduceMotion ? 1000 : 3900;
+      const intro = $("#intro");
+      introScale = 3900 / INTRO_MS;
+      introStart = performance.now();
+      $("#boot-name").textContent = PORTFOLIO.nome.toUpperCase();
+      intro.style.setProperty("--d", INTRO_MS + "ms");
+      intro.hidden = false;
+      intro.classList.add("run");
+      audio.playStartup();
+
+      let ended = false;
+      const end = () => {
+        if (ended) return;
+        ended = true;
+        clearTimeout(timer);
+        // Mesmo "true" (captura) do addEventListener; sem ele o atalho continuaria
+        // ativo depois da abertura e engoliria Enter/Espaço/Esc.
+        removeEventListener("keydown", skipKey, true);
+        audio.cancelStartup();
+        store.set("ps3-booted", "1", sessionStorage);
+        introStart = 0;              // fundo e onda em opacidade total
+        intro.hidden = true;
+        showXMB(true);
+      };
+      const skipKey = (e) => {
+        if (["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); end(); }
+      };
+      intro.addEventListener("click", end, { once: true });
+      addEventListener("keydown", skipKey, true);
+      const timer = setTimeout(end, INTRO_MS);
+    }
+
     build();
     wire();
     tick();
     setInterval(tick, 15000);
 
-    // Sem tela de boot: o menu aparece na hora. Na primeira visita da sessão a onda
-    // surge com um fade e o som de abertura toca (ou no primeiro clique/tecla, se o
-    // navegador bloquear som automático).
-    const firstVisit = store.get("ps3-booted", sessionStorage) !== "1";
-    if (firstVisit) audio.prepareStartup();
-
+    // O navegador só libera som depois de um clique/tecla; a partir daí os
+    // "ticks" de navegação funcionam.
     const unlock = () => {
       audio.init();
       if (audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume();
-      if (firstVisit) audio.playStartup();
       removeEventListener("pointerdown", unlock, true);
       removeEventListener("keydown", unlock, true);
     };
     addEventListener("pointerdown", unlock, true);
     addEventListener("keydown", unlock, true);
 
-    waveAlpha = firstVisit && !reduceMotion ? 0 : 1;
-    showXMB(firstVisit);
-    if (firstVisit) audio.playStartup();
+    // Abertura uma vez por sessão; depois, menu direto.
+    if (store.get("ps3-booted", sessionStorage) === "1") showXMB(false);
+    else runIntro();
   </script>
 </body>
 </html>
