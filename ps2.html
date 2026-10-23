@@ -399,6 +399,7 @@
       border: 1px solid var(--panel-border);
       transition: background 0.2s, box-shadow 0.2s;
     }
+    .btn.soon { opacity: 0.55; cursor: default; }
     .btn:hover, .btn:focus-visible { background: rgba(30, 91, 255, 0.5); box-shadow: 0 0 18px var(--glow-soft); }
 
     /* ---------- About (system configuration) ---------- */
@@ -947,9 +948,10 @@
       const L = p.links || {};
       // Links externos abrem em nova aba; páginas deste site (ex.: index.html) abrem na mesma
       const ext = (u) => (/^https?:/.test(u) ? ' target="_blank" rel="noopener"' : "");
+      const has = (u) => u && u !== "#";   // "#" = link ainda não definido
       const links = [
-        L.demo ? `<a class="btn" href="${esc(L.demo)}"${ext(L.demo)}>▶ Ver demo</a>` : "",
-        L.codigo ? `<a class="btn" href="${esc(L.codigo)}"${ext(L.codigo)}>⌘ Código</a>` : "",
+        has(L.demo) ? `<a class="btn" href="${esc(L.demo)}"${ext(L.demo)}>▶ Ver demo</a>` : L.demo ? `<span class="btn soon">▶ Demo em breve</span>` : "",
+        has(L.codigo) ? `<a class="btn" href="${esc(L.codigo)}"${ext(L.codigo)}>⌘ Código</a>` : "",
       ].join("");
       $("#detail").innerHTML = `
         <div class="meta">Slot ${String(i + 1).padStart(2, "0")} · ${esc(p.ano || "")}</div>
