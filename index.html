@@ -63,19 +63,6 @@
     #mute[aria-pressed="true"] .on { display: none; }
     #mute[aria-pressed="true"] .off { display: block; }
 
-    /* ---------- Boot ---------- */
-    #boot { z-index: 9; cursor: pointer; }
-    #boot-text {
-      font-weight: 300;
-      letter-spacing: 0.35em;
-      font-size: clamp(0.8rem, 2.6vw, 1.15rem);
-      padding: 0 16px;
-      text-align: center;
-      opacity: 0;
-    }
-    #boot.run #boot-text { animation: bootText 1.7s ease 0.25s forwards; }
-    @keyframes bootText { 0% { opacity: 0; } 30%, 70% { opacity: 1; } 100% { opacity: 0; } }
-
     /* ---------- XMB ---------- */
     #xmb { position: fixed; inset: 0; z-index: 5; }
     #xmb[hidden] { display: none; }
@@ -343,10 +330,6 @@
     <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
   </button>
 
-  <section id="boot" class="screen" hidden aria-label="Animação de abertura (clique para pular)">
-    <div id="boot-text">PORTFOLIO ENTERTAINMENT</div>
-  </section>
-
   <div id="xmb" hidden>
     <div class="clock" aria-hidden="true">
       <span class="date" id="clock-date"></span><span class="sep"></span><span class="time" id="clock-time"></span>
@@ -403,7 +386,6 @@
     const $ = (s, r = document) => r.querySelector(s);
     const $$ = (s, r = document) => [...r.querySelectorAll(s)];
     const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const BOOT_MS = reduceMotion ? 800 : 3000;
     const store = {
       get(k, s = localStorage) { try { return s.getItem(k); } catch { return null; } },
       set(k, v, s = localStorage) { try { s.setItem(k, v); } catch {} },
@@ -564,23 +546,27 @@
           });
         });
       },
-      // Usa assets/ps3-boot.mp3 se existir; senão, o sintetizado.
-      playBoot() {
-        return new Promise((resolve) => {
-          let done = false;
-          const fallback = () => { if (done) return; done = true; this.file = null; this.bootSynth(); resolve(); };
-          try {
-            const el = new Audio();
-            el.muted = this.muted;
-            el.addEventListener("canplay", () => {
-              if (done) return;
-              el.play().then(() => { done = true; this.file = el; resolve(); }).catch(fallback);
-            }, { once: true });
-            el.addEventListener("error", fallback, { once: true });
-            el.src = "assets/ps3-boot.mp3";
-            setTimeout(fallback, 600);
-          } catch { fallback(); }
-        });
+      // Som de abertura: assets/ps3-boot.mp3 (ou o sintetizado, se o arquivo faltar).
+      // Toca uma vez por sessão: ao abrir, se o navegador deixar; senão, no primeiro clique/tecla.
+      startup: null,
+      startupDone: false,
+      prepareStartup() {
+        const el = new Audio("assets/ps3-boot.mp3");
+        el.preload = "auto";
+        el.addEventListener("error", () => { if (this.startup === el) this.startup = null; }, { once: true });
+        this.startup = el;
+      },
+      playStartup() {
+        if (this.startupDone) return;
+        const ok = () => { this.startupDone = true; store.set("ps3-booted", "1", sessionStorage); };
+        if (this.startup) {
+          this.startup.muted = this.muted;
+          this.file = this.startup;
+          this.startup.play().then(ok).catch(() => {});   // bloqueado: tenta de novo no 1º clique
+        } else if (this.ctx && this.ctx.state === "running") {
+          this.bootSynth();
+          ok();
+        }
       },
       tick(kind = "move") {
         if (!this.ctx || this.muted) return;
@@ -931,7 +917,7 @@
       $("#clock-time").textContent = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
     }
 
-    /* ---------------- Fluxo: início → boot → XMB ---------------- */
+    /* ---------------- Fluxo: abre direto no XMB ---------------- */
     function showXMB(animate) {
       waveTarget = 1;
       const x = $("#xmb");
@@ -941,63 +927,30 @@
       focusCurrent();
     }
 
-    let booting = false;
-    async function startBoot() {
-      if (booting) return;
-      booting = true;
-      audio.init();
-      if (audio.ctx && audio.ctx.state === "suspended") {
-        // Sem interação o navegador costuma recusar; espera no máximo 150ms pela resposta.
-        await Promise.race([audio.ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 150))]);
-      }
-      // Só toca o som do boot se o áudio foi liberado; senão ele tocaria atrasado no primeiro clique.
-      if (audio.ctx && audio.ctx.state === "running") await audio.playBoot();
-      const boot = $("#boot");
-      boot.hidden = false;
-      boot.classList.add("run");
-      const waveTimer = setTimeout(() => (waveTarget = 1), reduceMotion ? 0 : 1700);
-
-      let ended = false;
-      const end = () => {
-        if (ended) return;
-        ended = true;
-        clearTimeout(waveTimer);
-        // Precisa do mesmo "true" (captura) usado no addEventListener, senão o atalho
-        // continua ativo depois do boot e engole Enter/Espaço/Esc.
-        removeEventListener("keydown", skipKey, true);
-        store.set("ps3-booted", "1", sessionStorage);
-        boot.classList.add("fade-out");
-        setTimeout(() => (boot.hidden = true), 600);
-        showXMB(true);
-      };
-      const skipKey = (e) => { if (["Enter", " ", "Escape"].includes(e.key)) { e.preventDefault(); e.stopImmediatePropagation(); end(); } };
-      boot.addEventListener("click", end, { once: true });
-      addEventListener("keydown", skipKey, true);
-      setTimeout(end, BOOT_MS);
-    }
-
     build();
     wire();
     tick();
     setInterval(tick, 15000);
 
-    // Sem tela de "pressione start": o boot começa sozinho. O navegador pode bloquear
-    // o som até o primeiro clique/tecla; a partir daí os sons de navegação funcionam.
+    // Sem tela de boot: o menu aparece na hora. Na primeira visita da sessão a onda
+    // surge com um fade e o som de abertura toca (ou no primeiro clique/tecla, se o
+    // navegador bloquear som automático).
+    const firstVisit = store.get("ps3-booted", sessionStorage) !== "1";
+    if (firstVisit) audio.prepareStartup();
+
     const unlock = () => {
       audio.init();
       if (audio.ctx && audio.ctx.state === "suspended") audio.ctx.resume();
+      if (firstVisit) audio.playStartup();
       removeEventListener("pointerdown", unlock, true);
       removeEventListener("keydown", unlock, true);
     };
     addEventListener("pointerdown", unlock, true);
     addEventListener("keydown", unlock, true);
 
-    if (store.get("ps3-booted", sessionStorage) === "1") {
-      waveAlpha = 1;
-      showXMB(false);
-    } else {
-      startBoot();
-    }
+    waveAlpha = firstVisit && !reduceMotion ? 0 : 1;
+    showXMB(firstVisit);
+    if (firstVisit) audio.playStartup();
   </script>
 </body>
 </html>
