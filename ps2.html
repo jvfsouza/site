@@ -18,7 +18,7 @@
       --glow-soft: rgba(127, 180, 255, 0.35);
       --text: #dfe9ff;
       --muted: #8ea6d4;
-      --panel: rgba(10, 30, 70, 0.45);
+      --panel: rgba(8, 24, 58, 0.72);
       --panel-border: rgba(127, 180, 255, 0.22);
       --cross: #7fb4ff;
       --circle: #ff6b7a;
@@ -292,9 +292,20 @@
       opacity: 1;
       transform: scale(1);
       box-shadow: 0 0 24px rgba(127, 180, 255, 0.9);
-      animation: pulse 1.8s ease-in-out infinite;
     }
-    @keyframes pulse { 50% { box-shadow: 0 0 40px rgba(127, 180, 255, 1); } }
+    /* O pulso anima só a opacidade de uma camada de brilho (barato),
+       em vez de animar o box-shadow (repinta a cada quadro). */
+    .orb { position: relative; }
+    .orb::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      box-shadow: 0 0 40px rgba(127, 180, 255, 1);
+      opacity: 0;
+    }
+    .menu-item.sel .orb::after, .menu-item:hover .orb::after { animation: pulse 1.8s ease-in-out infinite; }
+    @keyframes pulse { 50% { opacity: 1; } }
 
     /* ---------- Projects (memory card browser) ---------- */
     .browser {
@@ -372,7 +383,6 @@
       border: 1px solid var(--panel-border);
       border-radius: 12px;
       padding: clamp(16px, 3vw, 28px);
-      backdrop-filter: blur(6px);
     }
     .detail { position: sticky; top: 0; }
     .detail h3 { margin: 0 0 4px; font-size: 1.4rem; font-weight: 600; color: #fff; }
@@ -775,12 +785,36 @@
 
     /* ---------------- Canvas de efeitos ---------------- */
     const cv = $("#fx"), g = cv.getContext("2d");
-    let W = 0, H = 0, DPR = 1;
+    let W = 0, H = 0, S = 1, menuBg = null;
+
+    // Desempenho: os efeitos são suaves, então o canvas é desenhado em resolução menor
+    // e o navegador amplia. No menu, 30 quadros por segundo bastam (tudo anda devagar).
+    const RES = 0.6;
+    const MENU_FRAME_MS = 1000 / 30;
+
+    // Imagens pré-desenhadas uma vez (antes eram degradês novos a cada quadro)
+    function makeGlow(size, inner, outer) {
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      const x = c.getContext("2d"), gr = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      gr.addColorStop(0, inner); gr.addColorStop(1, outer);
+      x.fillStyle = gr; x.fillRect(0, 0, size, size);
+      return c;
+    }
+    const dotSprite = makeGlow(32, "rgba(190,220,255,1)", "rgba(60,120,255,0)");
+    const fogSprite = makeGlow(256, "rgba(40,110,255,1)", "rgba(40,110,255,0)");
+
     function resize() {
-      DPR = Math.min(devicePixelRatio || 1, 2);
+      S = Math.min(devicePixelRatio || 1, 1.5) * RES;
       W = innerWidth; H = innerHeight;
-      cv.width = W * DPR; cv.height = H * DPR;
-      g.setTransform(DPR, 0, 0, DPR, 0, 0);
+      cv.width = Math.round(W * S); cv.height = Math.round(H * S);
+      g.setTransform(S, 0, 0, S, 0, 0);
+      // Fundo do menu desenhado uma vez por tamanho de tela
+      menuBg = document.createElement("canvas");
+      menuBg.width = cv.width; menuBg.height = cv.height;
+      const b = menuBg.getContext("2d"), lin = b.createLinearGradient(0, 0, 0, menuBg.height);
+      lin.addColorStop(0, "#020814"); lin.addColorStop(0.6, "#061a3a"); lin.addColorStop(1, "#0a2a5c");
+      b.fillStyle = lin; b.fillRect(0, 0, menuBg.width, menuBg.height);
     }
     addEventListener("resize", resize);
     resize();
@@ -797,15 +831,11 @@
         p.x += p.vx * dt; p.y += p.vy * dt; p.tw += dt * 2;
         if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); }
         if (p.x < -0.05) p.x = 1.05; else if (p.x > 1.05) p.x = -0.05;
-        const r = 0.6 + p.z * 2.2;
-        const a = alpha * (0.25 + 0.5 * p.z) * (0.6 + 0.4 * Math.sin(p.tw));
-        const px = p.x * W, py = p.y * H;
-        const grd = g.createRadialGradient(px, py, 0, px, py, r * 4);
-        grd.addColorStop(0, `rgba(190,220,255,${a})`);
-        grd.addColorStop(1, "rgba(60,120,255,0)");
-        g.fillStyle = grd;
-        g.beginPath(); g.arc(px, py, r * 4, 0, Math.PI * 2); g.fill();
+        const r = (0.6 + p.z * 2.2) * 4;
+        g.globalAlpha = alpha * (0.25 + 0.5 * p.z) * (0.6 + 0.4 * Math.sin(p.tw));
+        g.drawImage(dotSprite, p.x * W - r, p.y * H - r, r * 2, r * 2);
       }
+      g.globalAlpha = 1;
       g.globalCompositeOperation = "source-over";
     }
 
@@ -868,7 +898,9 @@
     function setScene(s) { scene = s; sceneStart = performance.now(); }
 
     function frame(now) {
-      const dt = Math.min((now - last) / 1000, 0.05);
+      requestAnimationFrame(frame);
+      if (scene === "menu" && now - last < MENU_FRAME_MS - 2) return;
+      const dt = Math.min((now - last) / 1000, 0.1);
       last = now;
       const t = (now - sceneStart) / 1000;
       g.clearRect(0, 0, W, H);
@@ -893,26 +925,22 @@
         drawParticles(dt * 3, 0.9);
       } else if (scene === "menu") {
         const fade = Math.min(t / 0.8, 1);
-        const bg = g.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, "#020814"); bg.addColorStop(0.6, "#061a3a"); bg.addColorStop(1, "#0a2a5c");
-        g.fillStyle = bg; g.fillRect(0, 0, W, H);
+        g.drawImage(menuBg, 0, 0, W, H);
         // Névoa / luzes se movendo devagar
         g.globalCompositeOperation = "lighter";
         const tt = reduceMotion ? 0 : now / 1000;
         [[0.25, 0.7, 0.55, 0.11], [0.75, 0.35, 0.45, 0.07], [0.5, 1.0, 0.8, 0.08]].forEach(([x, y, r, a], i) => {
           const px = W * (x + Math.sin(tt * 0.12 + i * 2) * 0.08), py = H * (y + Math.cos(tt * 0.1 + i) * 0.05);
           const rad = Math.max(W, H) * r;
-          const gr = g.createRadialGradient(px, py, 0, px, py, rad);
-          gr.addColorStop(0, `rgba(40,110,255,${a * fade})`);
-          gr.addColorStop(1, "rgba(40,110,255,0)");
-          g.fillStyle = gr; g.fillRect(0, 0, W, H);
+          g.globalAlpha = a * fade;
+          g.drawImage(fogSprite, px - rad, py - rad, rad * 2, rad * 2);
         });
+        g.globalAlpha = 1;
         g.globalCompositeOperation = "source-over";
         drawParticles(dt, 0.55 * fade);
       } else {
         g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
       }
-      requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
 
