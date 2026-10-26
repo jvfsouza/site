@@ -1,47 +1,4 @@
 /* Portfólio estilo PS3 (index.html) — código */
-/* =========================================================
-   EDITE AQUI: todo o conteúdo do portfólio fica neste objeto.
-   ========================================================= */
-// Textos com duas versões usam { pt: "...", en: "..." }; textos simples valem para os dois idiomas.
-const PORTFOLIO = {
-  nome: "João Victor",
-  // Currículo: coloque o arquivo em assets/docs/ com este nome (ou troque o caminho).
-  // Deixe "" para esconder o item.
-  curriculo: "assets/docs/curriculo.pdf",
-  cargo: { pt: "Desenvolvedor FullStack", en: "Fullstack Developer" },
-  bio: {
-    pt: "faço programa por dinheiro. me contrate.",
-    en: "Hi! I'm a developer who likes building interfaces that feel alive — with motion, sound and details that remind me of the consoles I grew up with. This is sample text: replace it with your bio.",
-  },
-  info: [
-    [{ pt: "Nome", en: "Name" }, "João Victor"],
-    [{ pt: "Função", en: "Role" }, { pt: "Desenvolvedor Fullstack", en: "Fullstack Developer" }],
-    [{ pt: "Localização", en: "Location" }, { pt: "Brasil", en: "Brazil" }],
-    [{ pt: "Idiomas", en: "Languages" }, { pt: "Português, Inglês", en: "Portuguese, English" }],
-    [{ pt: "Disponível para", en: "Available for" }, { pt: "Freelance e vagas", en: "Freelance and jobs" }],
-    [{ pt: "Versão do sistema", en: "System version" }, "6.70"],
-  ],
-  habilidades: [
-    ["HTML & CSS", 90],
-    ["JavaScript", 80],
-    ["Aquelas la tlgd", "kkk"],
-    ["Node.js", 60],
-    ["UI / Design", 65],
-  ],
-  projetos: [
-    { titulo: { pt: "Projeto Alpha", en: "Project Alpha" }, ano: "2026", descricao: { pt: "Aplicação web de exemplo. Descreva aqui o problema, o que você construiu e o resultado.", en: "Sample web app. Describe the problem, what you built and the result." }, tecnologias: ["HTML", "CSS", "JavaScript"], links: { demo: "#", codigo: "https://github.com/jvfsouza" }, cor: 215 },
-    { titulo: { pt: "Projeto Beta", en: "Project Beta" }, ano: "2025", descricao: { pt: "Dashboard com gráficos em tempo real. Substitua por um projeto seu.", en: "Real-time charts dashboard. Replace it with one of your projects." }, tecnologias: ["React", "TypeScript"], links: { demo: "#", codigo: "https://github.com/jvfsouza" }, cor: 265 },
-    { titulo: { pt: "Projeto Gamma", en: "Project Gamma" }, ano: "2025", descricao: { pt: "API REST com autenticação e banco de dados. Texto de exemplo.", en: "REST API with authentication and a database. Sample text." }, tecnologias: ["Node.js", "PostgreSQL"], links: { codigo: "https://github.com/jvfsouza" }, cor: 160 },
-    { titulo: { pt: "Projeto Delta", en: "Project Delta" }, ano: "2024", descricao: { pt: "Jogo de navegador feito com Canvas. Texto de exemplo.", en: "Browser game made with Canvas. Sample text." }, tecnologias: ["Canvas", "JavaScript"], links: { demo: "#" }, cor: 330 },
-    { titulo: { pt: "Portfólio PS2", en: "PS2 Portfolio" }, ano: "2026", descricao: { pt: "A versão anterior deste portfólio, inspirada no boot e no menu do PlayStation 2.", en: "The previous version of this portfolio, inspired by the PlayStation 2 boot and menu." }, tecnologias: ["Canvas", "CSS 3D", "Web Audio"], links: { demo: "ps2.html", codigo: "https://github.com/jvfsouza/site" }, cor: 225 },
-  ],
-  contatos: [
-    { rotulo: "E-mail", valor: "jvfs.ferreira@gmail.com", url: "mailto:jvfs.ferreira@gmail.com", icone: "mail" },
-    { rotulo: "GitHub", valor: "github.com/jvfsouza", url: "https://github.com/jvfsouza", icone: "code" },
-    { rotulo: "LinkedIn", valor: "linkedin.com/joaovfsouza", url: "https://www.linkedin.com/in/joaovfsouza/", icone: "link" },
-  ],
-};
-/* ========================================================= */
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -59,7 +16,7 @@ const icon = (name) => `<img class="ico" src="assets/icons/${name}.svg" alt="" d
 /* ---------------- Idioma ---------------- */
 const STR = {
   pt: {
-    locale: "pt-BR", title: "João · Portfólio", portfolio: "portfólio", skip: "clique para pular",
+    locale: "pt-BR", title: "Portfólio", portfolio: "portfólio", skip: "clique para pular",
     hint: "← → categorias · ↑ ↓ itens · Enter abrir", back: "Voltar", cats: "Categorias",
     intro: "Abertura (clique para pular)", mute: "Silenciar som", unmute: "Ativar som",
     user: "Usuário", profile: "Perfil", settings: "Configurações", skills: "Habilidades", skill: "Habilidade",
@@ -71,7 +28,7 @@ const STR = {
     language: "Idioma", volume: "Volume", volumeSub: (v) => (v ? `${v}%` : "Sem som"), mutedLvl: "Sem som",
   },
   en: {
-    locale: "en-US", title: "João · Portfolio", portfolio: "portfolio", skip: "click to skip",
+    locale: "en-US", title: "Portfolio", portfolio: "portfolio", skip: "click to skip",
     hint: "← → categories · ↑ ↓ items · Enter open", back: "Back", cats: "Categories",
     intro: "Intro (click to skip)", mute: "Mute sound", unmute: "Unmute sound",
     user: "User", profile: "Profile", settings: "Settings", skills: "Skills", skill: "Skill",
@@ -207,52 +164,34 @@ const audio = {
     this.master = this.ctx.createGain();
     this.master.gain.value = this.gain();
     this.master.connect(this.ctx.destination);
+    this.decodeSounds();
   },
   setMuted(m) {
     this.muted = m;
     store.set("ps3-muted", m ? "1" : "0");
     this.applyLevel();
   },
-  reverb(sec = 3) {
-    const c = this.ctx, len = c.sampleRate * sec, buf = c.createBuffer(2, len, c.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = buf.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+  // Sons curtos em assets/sounds/ (gravados 10x mais altos; tocam com ganho 0,1)
+  sounds: {},
+  rawSounds: null,
+  fetchSounds(files) {
+    this.rawSounds = Object.entries(files).map(([k, url]) => [k, fetch(url).then((r) => (r.ok ? r.arrayBuffer() : null)).catch(() => null)]);
+  },
+  decodeSounds() {
+    if (!this.ctx || !this.rawSounds) return;
+    for (const [k, raw] of this.rawSounds) {
+      raw.then((b) => b && this.ctx.decodeAudioData(b)).then((buf) => { if (buf) this.sounds[k] = buf; }).catch(() => {});
     }
-    const conv = c.createConvolver();
-    conv.buffer = buf;
-    return conv;
   },
-  // Recriação sintetizada do som de abertura (~4,5 s): "cordas" que crescem com o
-  // filtro abrindo. Usada só se assets/sounds/ps3-boot.mp3 não carregar.
-  bootSynth() {
-    if (!this.ctx) return;
-    const c = this.ctx, t0 = c.currentTime + 0.03;
-    const out = c.createGain(), rev = this.reverb(), wet = c.createGain();
-    out.gain.value = 0.8; wet.gain.value = 0.7;
-    out.connect(this.master); out.connect(rev); rev.connect(wet); wet.connect(this.master);
-
-    const lp = c.createBiquadFilter();
-    lp.type = "lowpass"; lp.Q.value = 0.7;
-    lp.frequency.setValueAtTime(250, t0 + 0.3);
-    lp.frequency.exponentialRampToValueAtTime(2600, t0 + 2.3);
-    lp.frequency.exponentialRampToValueAtTime(900, t0 + 4.4);
-    const pad = c.createGain();
-    pad.gain.setValueAtTime(0.0001, t0 + 0.3);
-    pad.gain.exponentialRampToValueAtTime(0.1, t0 + 2.3);
-    pad.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.7);
-    lp.connect(pad); pad.connect(out);
-    [65.41, 130.81, 196, 261.63, 329.63, 392, 493.88, 587.33].forEach((f) => {
-      [-7, 0, 7].forEach((det) => {
-        const o = c.createOscillator();
-        o.type = "sawtooth"; o.frequency.value = f; o.detune.value = det;
-        const g = c.createGain(); g.gain.value = 0.12;
-        o.connect(g); g.connect(lp);
-        o.start(t0 + 0.3); o.stop(t0 + 4.8);
-      });
-    });
+  playSound(k, gain = 0.1) {
+    const buf = this.sounds[k];
+    if (!buf) return;
+    const src = this.ctx.createBufferSource(), g = this.ctx.createGain();
+    src.buffer = buf; g.gain.value = gain;
+    src.connect(g); g.connect(this.master);
+    src.start();
   },
-  // Som de abertura: assets/sounds/ps3-boot.mp3 (ou o sintetizado, se o arquivo faltar).
+  // Som de abertura: assets/sounds/ps3-boot.mp3.
   // Tenta tocar uma vez, no começo da abertura. Se o navegador bloquear som
   // automático, não toca (para não começar atrasado, já no menu).
   startup: null,
@@ -263,12 +202,6 @@ const audio = {
     el.muted = this.muted;
     el.volume = this.volume / 100;
     this.startup = el;
-    const synth = () => {
-      if (this.startupDone || !this.ctx || this.ctx.state !== "running") return;
-      this.startupDone = true;
-      this.bootSynth();
-    };
-    el.addEventListener("error", synth, { once: true });
     el.play().then(() => { this.startupDone = true; this.file = el; }).catch(() => {});
   },
   // Fim da abertura: se o som ainda não começou (carregando/bloqueado), cancela.
@@ -278,19 +211,16 @@ const audio = {
   },
   tick(kind = "move") {
     if (!this.ctx || this.muted || !this.volume) return;
-    const c = this.ctx, t = c.currentTime;
-    const notes = { move: [[1567.98, 0, 0.05]], cat: [[1174.66, 0, 0.06]], ok: [[1318.5, 0, 0.07], [1975.5, 0.07, 0.07]], back: [[1318.5, 0, 0.06], [880, 0.06, 0.06]] }[kind];
-    notes.forEach(([f, d, v]) => {
-      const o = c.createOscillator(), g = c.createGain();
-      o.type = "triangle"; o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t + d);
-      g.gain.exponentialRampToValueAtTime(v, t + d + 0.004);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.09);
-      o.connect(g); g.connect(this.master);
-      o.start(t + d); o.stop(t + d + 0.1);
-    });
+    this.playSound(kind);
   },
 };
+
+audio.fetchSounds({
+  move: "assets/sounds/ps3-move.wav",
+  cat: "assets/sounds/ps3-category.wav",
+  ok: "assets/sounds/ps3-open.wav",
+  back: "assets/sounds/ps3-back.wav",
+});
 
 let CATS = makeCats();
 const state = { cat: CATS.findIndex((c) => c.id === "projects"), item: CATS.map(() => 0), panel: false };
@@ -661,7 +591,7 @@ function tick() {
 // Textos fixos da página no idioma atual
 function applyTexts() {
   document.documentElement.lang = lang === "en" ? "en" : "pt-BR";
-  document.title = T().title;
+  document.title = `${PORTFOLIO.nome} · ${T().title}`;
   $("#boot-logo .sub").textContent = T().portfolio;
   $("#intro .skip").textContent = T().skip;
   $("#intro").setAttribute("aria-label", T().intro);
