@@ -24,7 +24,6 @@ const STR = {
     sysinfo: "Informações do sistema", sysinfoSub: "Dados do perfil e versão", level: "Nível",
     resume: "Currículo", resumeSub: "Abrir em PDF", resumeSoon: "Ainda não adicionado",
     play: "▶ Iniciar (ver demo)", soon: "▶ Demo em breve", code: "⌘ Ver código",
-    ps2: "Versão PS2", ps2Sub: "Abrir o portfólio no estilo PlayStation 2",
     language: "Idioma", volume: "Volume", volumeSub: (v) => (v ? `${v}%` : "Sem som"), mutedLvl: "Sem som",
   },
   en: {
@@ -36,7 +35,6 @@ const STR = {
     sysinfo: "System information", sysinfoSub: "Profile details and version", level: "Level",
     resume: "CV", resumeSub: "Open as PDF", resumeSoon: "Not added yet",
     play: "▶ Start (view demo)", soon: "▶ Demo coming soon", code: "⌘ View code",
-    ps2: "PS2 version", ps2Sub: "Open the PlayStation 2 style portfolio",
     language: "Language", volume: "Volume", volumeSub: (v) => (v ? `${v}%` : "Muted"), mutedLvl: "Muted",
   },
 };
@@ -134,7 +132,6 @@ function makeCats() {
       id: "contact", label: T().contact, icon: "globe",
       items: [
         ...P.contatos.map((c) => ({ title: tr(c.rotulo), sub: tr(c.valor), icon: c.icone || "link", href: c.url })),
-        { title: T().ps2, sub: T().ps2Sub, icon: "ps2", href: "ps2.html" },
       ],
     },
   ];

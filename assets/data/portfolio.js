@@ -10,7 +10,7 @@ const PORTFOLIO = {
   curriculo: "assets/docs/curriculo.pdf",
   cargo: { pt: "Desenvolvedor FullStack", en: "Fullstack Developer" },
   bio: {
-    pt: "faço programa por dinheiro. me contrate.",
+    pt: "Sou dev fullstack que adora aprender",
     en: "Hi! I'm a developer who likes building interfaces that feel alive — with motion, sound and details that remind me of the consoles I grew up with. This is sample text: replace it with your bio.",
   },
   info: [
@@ -22,18 +22,18 @@ const PORTFOLIO = {
     [{ pt: "Versão do sistema", en: "System version" }, "6.70"],
   ],
   habilidades: [
-    ["HTML & CSS", 90],
+    ["Python", 90],
     ["JavaScript", 80],
-    ["Aquelas la tlgd", "kkk"],
-    ["Node.js", 60],
-    ["UI / Design", 65],
+    ["SQL", 80],
+    ["Java", 70],
+    ["Node.js", 70],
+    ["UI / Design", 50],
+    ["IA", 70]
   ],
   projetos: [
-    { titulo: { pt: "Projeto Alpha", en: "Project Alpha" }, ano: "2026", descricao: { pt: "Aplicação web de exemplo. Descreva aqui o problema, o que você construiu e o resultado.", en: "Sample web app. Describe the problem, what you built and the result." }, tecnologias: ["HTML", "CSS", "JavaScript"], links: { demo: "#", codigo: "https://github.com/jvfsouza" }, cor: 215 },
-    { titulo: { pt: "Projeto Beta", en: "Project Beta" }, ano: "2025", descricao: { pt: "Dashboard com gráficos em tempo real. Substitua por um projeto seu.", en: "Real-time charts dashboard. Replace it with one of your projects." }, tecnologias: ["React", "TypeScript"], links: { demo: "#", codigo: "https://github.com/jvfsouza" }, cor: 265 },
-    { titulo: { pt: "Projeto Gamma", en: "Project Gamma" }, ano: "2025", descricao: { pt: "API REST com autenticação e banco de dados. Texto de exemplo.", en: "REST API with authentication and a database. Sample text." }, tecnologias: ["Node.js", "PostgreSQL"], links: { codigo: "https://github.com/jvfsouza" }, cor: 160 },
-    { titulo: { pt: "Projeto Delta", en: "Project Delta" }, ano: "2024", descricao: { pt: "Jogo de navegador feito com Canvas. Texto de exemplo.", en: "Browser game made with Canvas. Sample text." }, tecnologias: ["Canvas", "JavaScript"], links: { demo: "#" }, cor: 330 },
-    { titulo: { pt: "Portfólio PS2", en: "PS2 Portfolio" }, ano: "2026", descricao: { pt: "A versão anterior deste portfólio, inspirada no boot e no menu do PlayStation 2.", en: "The previous version of this portfolio, inspired by the PlayStation 2 boot and menu." }, tecnologias: ["Canvas", "CSS 3D", "Web Audio"], links: { demo: "ps2.html", codigo: "https://github.com/jvfsouza/site" }, cor: 225 },
+    { titulo: { pt: "API spotify", en: "Spotify API" }, ano: "2026", descricao: { pt: "Script para pegar dados de uma API do spotify para a construção de um grafo relacionando as musiscas e os artistas/colaborações", en: "Script that fetches data from the Spotify API to build a graph relating songs and artists/collaborations." }, tecnologias: ["REST APIs", "Python", "OAuth authentication"], links: { demo: "#", codigo: "https://github.com/jvfsouza/comunicacao-e-redes" }, cor: 215 },
+    { titulo: { pt: "API em express.js", en: "Express.js API" }, ano: "2026", descricao: { pt: "Desenvolvimento de uma API em express.js para um sistema de catalogação de tarefas", en: "Development of an Express.js API for a task cataloging system." }, tecnologias: ["Express.js", "javascript"], links: { demo: "#", codigo: "https://github.com/jvfsouza/api-express" }, cor: 265 },
+    { titulo: { pt: "Listas da Sirius", en: "SIRIUS Exercise Lists" }, ano: "2025", descricao: { pt: "Listas de exercícios do grupo SIRIUS da ufabc que faço parte", en: "Exercise lists from the SIRIUS group at UFABC that im part of" }, tecnologias: ["C/C++", "sitemas embarcados"], links: { codigo: "https://github.com/jvfsouza/listas-sirius" }, cor: 160 },
   ],
   contatos: [
     { rotulo: "E-mail", valor: "jvfs.ferreira@gmail.com", url: "mailto:jvfs.ferreira@gmail.com", icone: "mail" },
